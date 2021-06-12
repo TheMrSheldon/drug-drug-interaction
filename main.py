@@ -17,7 +17,7 @@ def init_sage(hidden_channels, num_datanodes, num_layers, dropout, device):
     evaluator = Evaluator(Datasets.DrugDrugInteraction)#TODO: maybe init the evaluator to the specified metric here (would also need to add the metric to the function parameters)
     return (model, embedding, predictor, evaluator)
 
-def train(model, embedding, predictor, metric, num_epochs, learn_rate, adj_t, split_edge, batch_size):
+def train(model, embedding, predictor, metric, num_epochs, learn_rate, graph, split_edge, batch_size):
     #TODO: use metric (maybe not needed here?)
 
     # Reset parameters
@@ -28,16 +28,16 @@ def train(model, embedding, predictor, metric, num_epochs, learn_rate, adj_t, sp
     optimizer = torch.optim.Adam(list(model.parameters()) + list(embedding.parameters()) + list(predictor.parameters()), lr=learn_rate)
     # Train for multiple epochs
     for epoch in range(num_epochs):
-        loss = gnn.train(model, predictor, embedding.weight, adj_t, split_edge, optimizer, batch_size)
+        loss = gnn.train(model, predictor, embedding.weight, graph.adj_t, split_edge, optimizer, batch_size)
         print(loss)
 
 def init_train_eval_sage(dataset, metric, num_epochs, batch_size, device):
     #TODO: use metric (maybe part of evaluator)
 
-    (num_datanodes, adj_t, split_edge) = load_dataset("./datasets/", dataset, device)
+    (graph, split_edge) = load_dataset("./datasets/", dataset, device)
 
-    (model, embedding, predictor, evaluator) = init_sage(hidden_channels=256, num_datanodes=num_datanodes, num_layers=2, dropout=0.5, device=device)
-    train(model, embedding, predictor, metric, num_epochs=num_epochs, learn_rate=0.005, adj_t=adj_t, split_edge=split_edge, batch_size=batch_size)
+    (model, embedding, predictor, evaluator) = init_sage(hidden_channels=256, num_datanodes=graph.num_nodes, num_layers=2, dropout=0.5, device=device)
+    train(model, embedding, predictor, metric, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size)
     # TODO: evaluate the trained model
 
 # Check if training on GPU is possible
