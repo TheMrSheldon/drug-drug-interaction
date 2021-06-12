@@ -1,0 +1,6 @@
+ogb>=1.3.0
+torch-scatter
+torch-sparse
+torch-cluster
+torch-spline-conv
+torch-geometric
