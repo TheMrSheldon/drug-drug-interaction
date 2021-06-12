@@ -1,5 +1,6 @@
 from torch_geometric.datasets import Planetoid
-from ogb.linkproppred import LinkPropPredDataset
+from ogb.linkproppred import PygLinkPropPredDataset
+import torch_geometric.transforms as T
 
 class Datasets:
     CiteSeer = 'CiteSeer';
@@ -10,6 +11,6 @@ class Datasets:
 
 def load_dataset(path, name):
     if name.startswith('ogbl-'):
-        return LinkPropPredDataset(name = name)
+        return PygLinkPropPredDataset(name = name, transform=T.ToSparseTensor())
     else:
         return Planetoid(path, name = name, split='public')
