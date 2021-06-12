@@ -5,14 +5,21 @@ import torch.nn
 import torch.optim
 from ogb.linkproppred import Evaluator, evaluate
 
+class Metrics:
+    MRR='mrr';
+    def HitsAt(num):
+        return f'Hits@{num}'
+
 def init_sage(hidden_channels, num_datanodes, num_layers, dropout, device):
     model = gnn.SAGE(hidden_channels, hidden_channels, hidden_channels, num_layers, dropout).to(device)
     embedding = torch.nn.Embedding(num_datanodes, hidden_channels).to(device)
     predictor = gnn.LinkPredictor(hidden_channels, hidden_channels, 1, num_layers, dropout).to(device)
-    evaluator = Evaluator(Datasets.DrugDrugInteraction)
+    evaluator = Evaluator(Datasets.DrugDrugInteraction)#TODO: maybe init the evaluator to the specified metric here (would also need to add the metric to the function parameters)
     return (model, embedding, predictor, evaluator)
 
-def train(model, embedding, predictor, num_epochs, learn_rate, adj_t, split_edge, batch_size):
+def train(model, embedding, predictor, metric, num_epochs, learn_rate, adj_t, split_edge, batch_size):
+    #TODO: use metric (maybe not needed here?)
+
     # Reset parameters
     torch.nn.init.xavier_uniform_(embedding.weight)
     model.reset_parameters()
@@ -24,11 +31,13 @@ def train(model, embedding, predictor, num_epochs, learn_rate, adj_t, split_edge
         loss = gnn.train(model, predictor, embedding.weight, adj_t, split_edge, optimizer, batch_size)
         print(loss)
 
-def init_train_eval_sage(dataset, num_epochs, batch_size, device):
+def init_train_eval_sage(dataset, metric, num_epochs, batch_size, device):
+    #TODO: use metric (maybe part of evaluator)
+
     (num_datanodes, adj_t, split_edge) = load_dataset("./datasets/", dataset, device)
 
     (model, embedding, predictor, evaluator) = init_sage(hidden_channels=256, num_datanodes=num_datanodes, num_layers=2, dropout=0.5, device=device)
-    train(model, embedding, predictor, num_epochs=num_epochs, learn_rate=0.005, adj_t=adj_t, split_edge=split_edge, batch_size=batch_size)
+    train(model, embedding, predictor, metric, num_epochs=num_epochs, learn_rate=0.005, adj_t=adj_t, split_edge=split_edge, batch_size=batch_size)
     # TODO: evaluate the trained model
 
 # Check if training on GPU is possible
@@ -41,13 +50,16 @@ print(device)
 ######################################################################################################################
 ### Reproduce
 # Does not yet work
-#init_train_eval_sage(Datasets.CiteSeer, 200, 64*1024, device)
-#init_train_eval_sage(Datasets.PubMed, 200, 64*1024, device)
-#init_train_eval_sage(Datasets.Cora, 200, 64*1024, device)
+
+#TODO: Use the metrics. Please note that the ogb.linkproppred.Evaluator can perform MRR and Hits@K. I just don't know yet how and if one may switch between those or if multiple evaluators are needed
+
+#init_train_eval_sage(Datasets.CiteSeer, Metrics.MRR, 200, 64*1024, device)
+#init_train_eval_sage(Datasets.PubMed, Metrics.MRR, 200, 64*1024, device)
+#init_train_eval_sage(Datasets.Cora, Metrics.MRR, 200, 64*1024, device)
 
 ### New Data
-init_train_eval_sage(Datasets.DrugDrugInteraction, 200, 64*1024, device)
+init_train_eval_sage(Datasets.DrugDrugInteraction, Metrics.HitsAt(20), 200, 64*1024, device)
 # Does not yet work
-init_train_eval_sage(Datasets.ProteinProteinAssociation, 200, 64*1024, device)
+init_train_eval_sage(Datasets.ProteinProteinAssociation, Metrics.HitsAt(20), 200, 64*1024, device)
 
 ### Hyperparams Check
