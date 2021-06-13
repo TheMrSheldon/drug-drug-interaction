@@ -4,14 +4,14 @@ import torch
 import torch_geometric.transforms as T
 
 class Datasets:
-    CiteSeer = 'CiteSeer';
-    PubMed = 'PubMed';
-    Cora = 'Cora';
-    DrugDrugInteraction = 'ogbl-ddi';
-    ProteinProteinAssociation = 'ogbl-ppa';
+    CiteSeer = 'CiteSeer'
+    PubMed = 'PubMed'
+    Cora = 'Cora'
+    DrugDrugInteraction = 'ogbl-ddi'
+    ProteinProteinAssociation = 'ogbl-ppa'
 
 def load_dataset(path, name, device):
-    if name.startswith('ogbl-'): # https://ogb.stanford.edu/docs/linkprop/ Topic: Pytorch Geometric Loader
+    if name.startswith('ogbl-'):  # https://ogb.stanford.edu/docs/linkprop/ Topic: Pytorch Geometric Loader
         dataset = PygLinkPropPredDataset(name = name, transform=T.ToSparseTensor())
         split_edge = dataset.get_edge_split()
         train_edge, valid_edge, test_edge = split_edge['train'], split_edge['valid'], split_edge['test']

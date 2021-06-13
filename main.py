@@ -6,7 +6,7 @@ import torch.optim
 from ogb.linkproppred import Evaluator, evaluate
 
 class Metrics:
-    MRR='mrr';
+    MRR='mrr'
     def HitsAt(num):
         return f'Hits@{num}'
 
