@@ -2,7 +2,7 @@ from torch_geometric.datasets import Planetoid
 from ogb.linkproppred import PygLinkPropPredDataset
 import torch
 import torch_geometric.transforms as T
-from torch_geometric.utils import train_test_split_edges, negative_sampling, add_self_loops
+from torch_geometric.utils import train_test_split_edges, to_dense_adj
 
 class Datasets:
     CiteSeer = 'CiteSeer'
@@ -23,11 +23,10 @@ def load_dataset(path, name, device):
         graph.adj_t.to(device)
         return (graph, split_edge)
     else:
-        # TODO find a way to use adj_t/coo etc.. convert to sparsetensor?
-        dataset = Planetoid(path, name=name)
+        dataset = Planetoid(path, name=name, transform=T.ToSparseTensor(remove_edge_index=False))
         graph = dataset[0]
         data = train_test_split_edges(graph)
-
+        
         train_edge, valid_edge, test_edge = data.train_pos_edge_index.t(), data.val_pos_edge_index.t(), data.test_pos_edge_index.t()
         idx = torch.randperm(train_edge.size(0))
         idx = idx[:valid_edge.size(0)]
