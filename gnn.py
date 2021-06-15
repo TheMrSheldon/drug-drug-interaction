@@ -62,10 +62,8 @@ class LinkPredictor(torch.nn.Module):
         return torch.sigmoid(x)
 
 def train(model, predictor, x, adj_t, split_edge, optimizer, batch_size):
-
     row, col, _ = adj_t.coo()
     edge_index = torch.stack([col, row], dim=0)
-
     model.train()
     predictor.train()
 

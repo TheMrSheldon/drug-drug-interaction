@@ -21,14 +21,15 @@ def train(model, embedding, predictor, metric, num_epochs, learn_rate, graph, sp
     #TODO: use metric (maybe not needed here?)
 
     # Reset parameters
-    torch.nn.init.xavier_uniform_(embedding.weight)
+    
+    torch.nn.init.xavier_uniform_(embedding.weight.to(device))
     model.reset_parameters()
     predictor.reset_parameters()
     # Init the optimizer
     optimizer = torch.optim.Adam(list(model.parameters()) + list(embedding.parameters()) + list(predictor.parameters()), lr=learn_rate)
     # Train for multiple epochs
     for epoch in range(num_epochs):
-        loss = gnn.train(model, predictor, embedding.weight, graph.adj_t, split_edge, optimizer, batch_size)
+        loss = gnn.train(model, predictor, embedding.weight, graph.adj_t.to(device), split_edge, optimizer, batch_size)
         print(loss)
 
 def init_train_eval_sage(dataset, metric, num_epochs, batch_size, device):
