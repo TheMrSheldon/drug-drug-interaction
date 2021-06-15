@@ -48,10 +48,8 @@ print(device)
 ######################################################################################################################
 # TASKS                                                                                                              #
 ######################################################################################################################
-### Reproduce
-# Does not yet work
-
 #TODO: Use the metrics. Please note that the ogb.linkproppred.Evaluator can perform MRR and Hits@K. I just don't know yet how and if one may switch between those or if multiple evaluators are needed
+### Reproduce
 init_train_eval_sage(Datasets.CiteSeer, Metrics.MRR, 200, 64*1024, device)
 init_train_eval_sage(Datasets.PubMed, Metrics.MRR, 200, 64*1024, device)
 init_train_eval_sage(Datasets.Cora, Metrics.MRR, 200, 64*1024, device)
