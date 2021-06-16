@@ -16,15 +16,15 @@ def load_dataset(path, name, device):
         dataset = PygLinkPropPredDataset(name=name, transform=T.ToSparseTensor())
         split_edge = dataset.get_edge_split()
         train_edge, valid_edge, test_edge = split_edge['train'], split_edge['valid'], split_edge['test']
-        graph = dataset[0]
+        graph = dataset[0].to(device)
         idx = torch.randperm(train_edge['edge'].size(0))
         idx = idx[:valid_edge['edge'].size(0)]
         split_edge['eval_train'] = {'edge': train_edge['edge'][idx]}
-        graph.adj_t.to(device)
+        
         return (graph, split_edge)
     else:
         dataset = Planetoid(path, name=name, transform=T.ToSparseTensor(remove_edge_index=False))
-        graph = dataset[0]
+        graph = dataset[0].to(device)
         data = train_test_split_edges(graph)
         
         train_edge, valid_edge, test_edge = data.train_pos_edge_index.t(), data.val_pos_edge_index.t(), data.test_pos_edge_index.t()

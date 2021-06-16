@@ -21,24 +21,21 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
     #TODO: use metric (maybe not needed here?)
 
     # Reset parameters
-    
-    torch.nn.init.xavier_uniform_(embedding.weight.to(device))
+    torch.nn.init.xavier_uniform_(embedding.weight)
     model.reset_parameters()
     predictor.reset_parameters()
     # Init the optimizer
     optimizer = torch.optim.Adam(list(model.parameters()) + list(embedding.parameters()) + list(predictor.parameters()), lr=learn_rate)
     # Train for multiple epochs
     for epoch in range(num_epochs):
-        loss = gnn.train(model, predictor, embedding.weight, graph.adj_t.to(device), split_edge, optimizer, batch_size)
-        if (epoch+1) % 10 == 0:
-            results = gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size)
-            print(results)
+        loss = gnn.train(model, predictor, embedding.weight, graph.adj_t, split_edge, optimizer, batch_size)
+        #if (epoch+1) % 10 == 0:
+            #results = gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size)
+            #print(results)
 
 def init_train_eval_sage(dataset, metric, num_epochs, batch_size, device):
     #TODO: use metric (maybe part of evaluator)
-
     (graph, split_edge) = load_dataset("./datasets/", dataset, device)
-
     (model, embedding, predictor, evaluator) = init_sage(hidden_channels=256, num_datanodes=graph.num_nodes, num_layers=2, dropout=0.5, device=device)
     train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size)
     # TODO: evaluate the trained model
