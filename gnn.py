@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch_geometric.utils import negative_sampling
 from torch_geometric.nn import SAGEConv
 
-import tqdm
+from tqdm import tqdm
 
 class SAGE(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_layers, dropout):
@@ -70,8 +70,8 @@ def train(model, predictor, x, adj_t, split_edge, optimizer, batch_size):
     pos_train_edge = split_edge['train']['edge'].to(x.device)
 
     total_loss = total_examples = 0
-    for perm in DataLoader(range(pos_train_edge.size(0)), batch_size,
-                           shuffle=True):
+    for perm in tqdm(DataLoader(range(pos_train_edge.size(0)), batch_size,
+                           shuffle=True, pin_memory=True), leave=False):
         optimizer.zero_grad()
 
         h = model(x, adj_t)
