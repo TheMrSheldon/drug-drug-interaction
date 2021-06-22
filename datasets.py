@@ -2,8 +2,8 @@ from torch_geometric.datasets import Planetoid
 from ogb.linkproppred import PygLinkPropPredDataset
 import torch
 import torch_geometric.transforms as T
-from torch_geometric.utils import train_test_split_edges, to_dense_adj
-from ogb.linkproppred import Evaluator, evaluate
+from torch_geometric.utils import train_test_split_edges
+from ogb.linkproppred import Evaluator
 from enum import Enum
 from collections import namedtuple
 

@@ -1,14 +1,13 @@
-from __future__ import nested_scopes
 from typing import List
-from torch.nn.functional import embedding
 from torch_geometric import datasets
-from datasets import Dataset, Datasets, EmbeddingModel, Metrics, load_dataset, create_evaluator
+from datasets import Dataset, Datasets, EmbeddingModel, load_dataset, create_evaluator
 import gnn
 import torch.nn
 import torch.optim
 from tqdm import tqdm
 
 def init_sage(hidden_channels, num_datanodes, num_neighbors, dropout, device: torch.device):
+    #TODO: adjust the sample sizes according to num_neighbors
     num_layers = len(num_neighbors)
     model = gnn.SAGE(hidden_channels, hidden_channels, hidden_channels, num_layers, dropout).to(device)
     embedding = torch.nn.Embedding(num_datanodes, hidden_channels).to(device)
@@ -65,20 +64,25 @@ if __name__ == '__main__':
     ### Hyperparams Check
     def task_hyperparams_check():
         #### Different Number of Neighbors
-        #TODO
+        run(Datasets1, 10, [30, 15], device)
+        run(Datasets1, 10, [25, 25], device)
+
         #### Different Number of Epochs
+        run(Datasets1, 1, [25, 15], device)
+        run(Datasets1, 5, [25, 15], device)
         run(Datasets1, 100, [25, 15], device)
         run(Datasets1, 300, [25, 15], device)
 
         #### Different Depth
-        #TODO
+        run(Datasets1, 10, [25, 15, 15], device)
+        run(Datasets1, 10, [25, 15, 30], device)
 
-        ### New Algorithm Variant
+    ### New Algorithm Variant
+    def task_algorithm_variant():
         #TODO
 
     ### Ablation Study
     def task_ablation_study():
         run(Datasets1+Datasets2, 10, [25, 15], device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
-    task_reproduce()
     task_new_data()
