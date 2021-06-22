@@ -71,7 +71,7 @@ def train(model, predictor, x, adj_t, split_edge, optimizer, batch_size):
 
     total_loss = total_examples = 0
     for perm in tqdm(DataLoader(range(pos_train_edge.size(0)), batch_size,
-                           shuffle=True, pin_memory=True, num_workers=4, persistent_workers=True), leave=False):
+                           shuffle=True, pin_memory=True), leave=False):
         optimizer.zero_grad()
 
         h = model(x, adj_t)
