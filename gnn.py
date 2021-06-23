@@ -145,14 +145,15 @@ def test(model, predictor, x, adj_t, split_edge, evaluator, batch_size):
         neg_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
     neg_test_pred = torch.cat(neg_test_preds, dim=0)
 
-    results = {}
+    #results = {}
+    results = []
     if 'hits@' in evaluator.eval_metric:
         for K in [10, 20, 30]:
             evaluator.K = K
-            train_hits = evaluator.eval({
-                'y_pred_pos': pos_train_pred,
-                'y_pred_neg': neg_valid_pred,
-            })[f'hits@{K}']
+            #train_hits = evaluator.eval({
+            #    'y_pred_pos': pos_train_pred,
+            #    'y_pred_neg': neg_valid_pred,
+            #})[f'hits@{K}']
             valid_hits = evaluator.eval({
                 'y_pred_pos': pos_valid_pred,
                 'y_pred_neg': neg_valid_pred,
@@ -162,11 +163,11 @@ def test(model, predictor, x, adj_t, split_edge, evaluator, batch_size):
                 'y_pred_neg': neg_test_pred,
             })[f'hits@{K}']
 
-            results[f'Hits@{K}'] = (train_hits, valid_hits, test_hits)
+            #results[f'Hits@{K}'] = (train_hits, valid_hits, test_hits)
+            results.append((valid_hits, test_hits))
     elif 'mrr' == evaluator.eval_metric: #https://github.com/facebookresearch/SEAL_OGB/blob/db81b1bb648f83e164411b977e6f52452193e125/seal_link_pred.py#L281
         neg_valid_pred = neg_valid_pred.view(pos_valid_pred.shape[0], -1)
         neg_test_pred = neg_test_pred.view(pos_test_pred.shape[0], -1)
-        results = {}
         valid_mrr = evaluator.eval({
             'y_pred_pos': pos_valid_pred,
             'y_pred_neg': neg_valid_pred,
@@ -177,6 +178,7 @@ def test(model, predictor, x, adj_t, split_edge, evaluator, batch_size):
             'y_pred_neg': neg_test_pred,
         })['mrr_list'].mean().item()
 
-        results['MRR'] = (valid_mrr, test_mrr)
+        #results['MRR'] = (valid_mrr, test_mrr)
+        results.append((valid_mrr, test_mrr))
 
     return results

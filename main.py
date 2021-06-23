@@ -15,6 +15,10 @@ def init_sage(hidden_channels, num_datanodes, num_neighbors, dropout, device: to
     return (model, embedding, predictor)
 
 def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph, split_edge, batch_size):
+    # Early stopping memory
+    best_model_params = None
+    best_model_score = None
+    evals_since_best = 0
     # Reset parameters
     torch.nn.init.xavier_uniform_(embedding.weight)
     model.reset_parameters()
@@ -24,9 +28,19 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
     # Train for multiple epochs
     for epoch in tqdm(range(num_epochs), leave=False):
         loss = gnn.train(model, predictor, embedding.weight, graph.adj_t, split_edge, optimizer, batch_size)
-        if (epoch+1) % 10 == 0:
-            results = gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size)
-            #TODO: early stopping
+        if (epoch+1) % 1 == 0:
+            (val_score, test_score) = gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size)[0]
+            if best_model_params is None or val_score >= best_model_score:
+                evals_since_best = 0
+                best_model_score = val_score
+                best_model_params = model.state_dict().copy()
+            else:
+                evals_since_best += 1
+                if evals_since_best > 3:
+                    print(f"\rEarly stopping triggered after {epoch} epochs")
+                    # restore
+                    model.load_state_dict(best_model_params, strict=True)
+                    break
 
 def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_neighbors, batch_size, device: torch.device):
     print(f'==Training dataset: {dataset.name}==')
@@ -79,10 +93,15 @@ if __name__ == '__main__':
 
     ### New Algorithm Variant
     def task_algorithm_variant():
+        pass
         #TODO
 
     ### Ablation Study
     def task_ablation_study():
         run(Datasets1+Datasets2, 10, [25, 15], device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
-    task_new_data()
+    task_reproduce()
+    #task_new_data()
+    #task_hyperparams_check()
+    #task_algorithm_variant()
+    #task_ablation_study
