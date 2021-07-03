@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     ### Ablation Study
     def task_ablation_study():
-        run(Datasets2, 10, [25, 15], device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        run(Datasets1+Datasets2, 10, [25, 15], device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
     #task_reproduce()
     #task_new_data()
