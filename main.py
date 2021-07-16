@@ -6,9 +6,7 @@ import torch.nn
 import torch.optim
 from tqdm import tqdm
 
-def init_sage(hidden_channels, num_datanodes, num_neighbors, dropout, device: torch.device):
-    #TODO: adjust the sample sizes according to num_neighbors
-    num_layers = len(num_neighbors)
+def init_sage(hidden_channels, num_datanodes, num_layers, dropout, device: torch.device):
     model = gnn.SAGE(hidden_channels, hidden_channels, hidden_channels, num_layers, dropout).to(device)
     embedding = torch.nn.Embedding(num_datanodes, hidden_channels).to(device)
     predictor = gnn.LinkPredictor(hidden_channels, hidden_channels, 1, num_layers, dropout).to(device)
@@ -42,22 +40,22 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
                     model.load_state_dict(best_model_params, strict=True)
                     break
 
-def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_neighbors, batch_size, device: torch.device):
+def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_layers, batch_size, device: torch.device):
     print(f'==Training dataset: {dataset.name}==')
     print(f' Loading Dataset', end='\r')
     (graph, split_edge) = load_dataset("./datasets/", dataset, device, embedding_model)
     print(f' Dataset loaded', end='\r')
     (model, embedding, predictor) = init_sage(hidden_channels=20, #graph.num_node_features
-        num_datanodes=graph.num_nodes, num_neighbors=num_neighbors, dropout=0.5, device=device)
+        num_datanodes=graph.num_nodes, num_layers=num_layers, dropout=0.5, device=device)
     evaluator = create_evaluator(dataset)
     train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size)
     print(gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size))
 
-def run(datasets: List[Dataset], num_epochs, num_neighbors, device: torch.device, embedding_models: List[EmbeddingModel]=[EmbeddingModel.Raw]):
+def run(datasets: List[Dataset], num_epochs, num_layers, device: torch.device, embedding_models: List[EmbeddingModel]=[EmbeddingModel.Raw]):
     batch_size = 64*1024
     for model in embedding_models:
         for dataset in datasets:
-            init_train_eval(model, dataset, num_epochs, num_neighbors, batch_size, device)
+            init_train_eval(model, dataset, num_epochs, num_layers, batch_size, device)
             torch.cuda.empty_cache()  # clear memory from old dataset
 
 if __name__ == '__main__':
@@ -73,27 +71,27 @@ if __name__ == '__main__':
     Datasets2 = [Datasets.DrugDrugInteraction, Datasets.ProteinProteinAssociation]
     ### Reproduce
     def task_reproduce():
-        run(Datasets1, 10, [25, 15], device)
+        run(Datasets1, 10, 2, device)
 
     ### New Data
     def task_new_data():
-        run(Datasets2, 10, [25, 15], device)
+        run(Datasets2, 10, 2, device)
 
     ### Hyperparams Check
     def task_hyperparams_check():
         #### Different Number of Neighbors
-        run(Datasets1, 10, [30, 15], device)
-        run(Datasets1, 10, [25, 25], device)
+        run(Datasets1, 10, 2, device)
+        run(Datasets1, 10, 2, device)
 
         #### Different Number of Epochs
-        run(Datasets1, 1, [25, 15], device)
-        run(Datasets1, 5, [25, 15], device)
-        run(Datasets1, 100, [25, 15], device)
-        run(Datasets1, 300, [25, 15], device)
+        run(Datasets1, 1, 2, device)
+        run(Datasets1, 5, 2, device)
+        run(Datasets1, 100, 2, device)
+        run(Datasets1, 300, 2, device)
 
         #### Different Depth
-        run(Datasets1, 10, [25, 15, 15], device)
-        run(Datasets1, 10, [25, 15, 30], device)
+        run(Datasets1, 10, 3, device)
+        run(Datasets1, 10, 3, device)
 
     ### New Algorithm Variant
     def task_algorithm_variant():
@@ -102,10 +100,10 @@ if __name__ == '__main__':
 
     ### Ablation Study
     def task_ablation_study():
-        run(Datasets1+Datasets2, 10, [25, 15], device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
     #task_reproduce()
-    #task_new_data()
-    #task_hyperparams_check()
-    #task_algorithm_variant()
+    task_new_data()
+    task_hyperparams_check()
+    task_algorithm_variant()
     task_ablation_study()
