@@ -36,16 +36,16 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
                 evals_since_best += 1
                 if evals_since_best > 3:
                     print(f"\rEarly stopping triggered after {epoch} epochs")
-                    # restore
-                    model.load_state_dict(best_model_params, strict=True)
                     break
+    # restore best model
+    model.load_state_dict(best_model_params, strict=True)
 
 def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_layers, batch_size, device: torch.device):
     print(f'==Training dataset: {dataset.name}==')
     print(f' Loading Dataset', end='\r')
     (graph, split_edge) = load_dataset("./datasets/", dataset, device, embedding_model)
     print(f' Dataset loaded', end='\r')
-    (model, embedding, predictor) = init_sage(hidden_channels=20, #graph.num_node_features
+    (model, embedding, predictor) = init_sage(hidden_channels=256,#20, #graph.num_node_features
         num_datanodes=graph.num_nodes, num_layers=num_layers, dropout=0.5, device=device)
     evaluator = create_evaluator(dataset)
     train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size)

@@ -14,12 +14,12 @@ class Metrics:
         return f'hits@{num}'
 
 Dataset = namedtuple("Dataset", "name metric")
-class Datasets:
+class Datasets: #Relevant metric for ddi and ppa taken from https://ogb.stanford.edu/docs/linkprop/
     CiteSeer = Dataset('CiteSeer', Metrics.MRR)
     PubMed = Dataset('PubMed', Metrics.MRR)
     Cora = Dataset('Cora', Metrics.MRR)
     DrugDrugInteraction = Dataset('ogbl-ddi', Metrics.HitsAt(20))
-    ProteinProteinAssociation = Dataset('ogbl-ppa', Metrics.HitsAt(20))
+    ProteinProteinAssociation = Dataset('ogbl-ppa', Metrics.HitsAt(100))
     
 class EmbeddingModel(Enum):
     Raw = None
