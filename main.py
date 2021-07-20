@@ -34,7 +34,7 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
                 best_model_params = model.state_dict().copy()
             else:
                 evals_since_best += 1
-                if evals_since_best > 3:
+                if evals_since_best > 10 and num_epochs >= 400:
                     print(f"\rEarly stopping triggered after {epoch} epochs")
                     break
     # restore best model
@@ -75,19 +75,18 @@ if __name__ == '__main__':
 
     ### New Data
     def task_new_data():
-        run(Datasets2, 10, 2, device)
+        run(Datasets2, 200, 2, device)
 
     ### Hyperparams Check
     def task_hyperparams_check():
-        #### Different Number of Neighbors
-        run(Datasets1, 10, 2, device)
-        run(Datasets1, 10, 2, device)
 
         #### Different Number of Epochs
-        run(Datasets1, 1, 2, device)
-        run(Datasets1, 5, 2, device)
-        run(Datasets1, 100, 2, device)
-        run(Datasets1, 300, 2, device)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 10, 2, device)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 50, 2, device)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 100, 2, device)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 200, 2, device)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 300, 2, device)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device)
 
         #### Different Depth
         run(Datasets1, 10, 3, device)
