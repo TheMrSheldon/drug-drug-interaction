@@ -35,21 +35,21 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
             else:
                 evals_since_best += 1
                 if evals_since_best > 10 and num_epochs >= 400:
-                    print(f"\rEarly stopping triggered after {epoch} epochs")
+                    print(f"\rEarly stopping triggered after {epoch} epochs", flush=True)
                     break
     # restore best model
     model.load_state_dict(best_model_params, strict=True)
 
 def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_layers, batch_size, device: torch.device):
-    print(f'==Training dataset: {dataset.name}==')
-    print(f' Loading Dataset', end='\r')
+    print(f'==Training dataset: {dataset.name}==', flush=True)
+    print(f' Loading Dataset', end='\r', flush=True)
     (graph, split_edge) = load_dataset("./datasets/", dataset, device, embedding_model)
-    print(f' Dataset loaded', end='\r')
+    print(f' Dataset loaded', end='\r', flush=True)
     (model, embedding, predictor) = init_sage(hidden_channels=256,#20, #graph.num_node_features
         num_datanodes=graph.num_nodes, num_layers=num_layers, dropout=0.5, device=device)
     evaluator = create_evaluator(dataset)
     train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size)
-    print(gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size))
+    print(gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size), flush=True)
 
 def run(datasets: List[Dataset], num_epochs, num_layers, device: torch.device, embedding_models: List[EmbeddingModel]=[EmbeddingModel.Raw]):
     batch_size = 64*1024
@@ -81,16 +81,22 @@ if __name__ == '__main__':
     def task_hyperparams_check():
 
         #### Different Number of Epochs
+        print('\nRun with 10 epochs', flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 10, 2, device)
+        print('\nRun with 50 epochs', flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 50, 2, device)
+        print('\nRun with 100 epochs', flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 100, 2, device)
+        print('\nRun with 200 epochs', flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 200, 2, device)
+        print('\nRun with 300 epochs', flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 300, 2, device)
+        print('\nRun with 400 epochs', flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device)
 
         #### Different Depth
-        run(Datasets1, 10, 3, device)
-        run(Datasets1, 10, 3, device)
+        #run(Datasets1, 10, 3, device)
+        #run(Datasets1, 10, 3, device)
 
     ### New Algorithm Variant
     def task_algorithm_variant():
@@ -102,7 +108,7 @@ if __name__ == '__main__':
         run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
     #task_reproduce()
-    task_new_data()
+    #task_new_data()
     task_hyperparams_check()
-    task_algorithm_variant()
-    task_ablation_study()
+    #task_algorithm_variant()
+    #task_ablation_study()
