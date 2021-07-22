@@ -43,10 +43,10 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
     # restore best model
     model.load_state_dict(best_model_params, strict=True)
 
-def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_layers, batch_size, device: torch.device):
+def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epochs, num_layers, batch_size, device: torch.device, drop_probability):
     print(f'==Training dataset: {dataset.name}==', flush=True)
     print(f' Loading Dataset', end='\r', flush=True)
-    (graph, split_edge) = load_dataset("./datasets/", dataset, device, embedding_model)
+    (graph, split_edge) = load_dataset("./datasets/", dataset, device, drop_probability, embedding_model)
     print(f' Dataset loaded', end='\r', flush=True)
     (model, embedding, predictor) = init_sage(hidden_channels=256 if embedding_model == EmbeddingModel.Raw else graph.x.size(-1),
         num_datanodes=graph.num_nodes, num_layers=num_layers, dropout=0.5, device=device)
@@ -54,11 +54,11 @@ def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epoch
     train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size, embedding_model=embedding_model)
     print(gnn.test(model, predictor, embedding.weight if embedding_model == EmbeddingModel.Raw else graph.x, graph.adj_t, split_edge, evaluator, batch_size), flush=True)
 
-def run(datasets: List[Dataset], num_epochs, num_layers, device: torch.device, embedding_models: List[EmbeddingModel]=[EmbeddingModel.Raw]):
+def run(datasets: List[Dataset], num_epochs, num_layers, device: torch.device, drop_probability=0, embedding_models: List[EmbeddingModel]=[EmbeddingModel.Raw]):
     batch_size = 64*1024
     for model in embedding_models:
         for dataset in datasets:
-            init_train_eval(model, dataset, num_epochs, num_layers, batch_size, device)
+            init_train_eval(model, dataset, num_epochs, num_layers, batch_size, device, drop_probability)
             torch.cuda.empty_cache()  # clear memory from old dataset
 
 if __name__ == '__main__':
@@ -103,18 +103,18 @@ if __name__ == '__main__':
     ### New Algorithm Variant
     def task_algorithm_variant():
         print("\n\nTask: Algorithm Variant", flush=True)
-        pass
-        #TODO
+        run(Datasets1+[Datasets.DrugDrugInteraction], 10, 2, device, drop_probability=.1)
+        run(Datasets1+[Datasets.DrugDrugInteraction], 10, 2, device, drop_probability=.5)
 
     ### Ablation Study
     def task_ablation_study():
         print("\n\nTask: Ablation Study", flush=True)
-        run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        run(Datasets1+Datasets2, 10, 2, device, embedding_models=[EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
         print(" Out of our own interest: Ablation Study with early stopping", flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device, embedding_models=[EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
-    task_reproduce()
-    task_new_data() #Nur Alex
-    task_hyperparams_check()
-    #task_algorithm_variant()
-    task_ablation_study()
+    #task_reproduce()
+    #task_new_data() #Nur Alex
+    #task_hyperparams_check()
+    task_algorithm_variant()
+    #task_ablation_study()

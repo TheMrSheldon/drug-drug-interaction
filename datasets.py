@@ -52,7 +52,7 @@ def apply_embedding_model(graph, embedding, device): #https://github.com/snap-st
     graph.x = x
     return graph
 
-def load_dataset(path, dataset: Dataset, device, embeddingmodel: EmbeddingModel=EmbeddingModel.Raw):
+def load_dataset(path, dataset: Dataset, device, drop_probability=0, embeddingmodel: EmbeddingModel=EmbeddingModel.Raw):
     if dataset.name.startswith('ogbl-'): # https://ogb.stanford.edu/docs/linkprop/#pyg
         dataset = PygLinkPropPredDataset(name=dataset.name, transform=T.ToSparseTensor(remove_edge_index=False))
         graph = dataset[0].to(device)
@@ -73,6 +73,12 @@ def load_dataset(path, dataset: Dataset, device, embeddingmodel: EmbeddingModel=
         data = train_test_split_edges(graph)
         
         train_edge, valid_edge, test_edge = data.train_pos_edge_index.t(), data.val_pos_edge_index.t(), data.test_pos_edge_index.t()
+
+        if drop_probability > 0:
+            num_tedges = train_edge.shape[0]
+            rand_columns = torch.randperm(num_tedges)[:int(num_tedges*(1-drop_probability))]
+            train_edge = train_edge[rand_columns]
+        
         idx = torch.randperm(train_edge.size(0))
         idx = idx[:valid_edge.size(0)]
 
