@@ -12,7 +12,7 @@ def init_sage(hidden_channels, num_datanodes, num_layers, dropout, device: torch
     predictor = gnn.LinkPredictor(hidden_channels, hidden_channels, 1, num_layers, dropout).to(device)
     return (model, embedding, predictor)
 
-def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph, split_edge, batch_size):
+def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph, split_edge, batch_size, embedding_model):
     # Early stopping memory
     best_model_params = None
     best_model_score = None
@@ -21,13 +21,16 @@ def train(model, embedding, predictor, evaluator, num_epochs, learn_rate, graph,
     torch.nn.init.xavier_uniform_(embedding.weight)
     model.reset_parameters()
     predictor.reset_parameters()
+    # Stuff
+    x_input = embedding.weight if embedding_model == EmbeddingModel.Raw else graph.x
+    embedding_parameters = list(embedding.parameters()) if embedding_model == EmbeddingModel.Raw else list()
     # Init the optimizer
-    optimizer = torch.optim.Adam(list(model.parameters()) + list(embedding.parameters()) + list(predictor.parameters()), lr=learn_rate)
+    optimizer = torch.optim.Adam(list(model.parameters()) + embedding_parameters + list(predictor.parameters()), lr=learn_rate)
     # Train for multiple epochs
     for epoch in tqdm(range(num_epochs), leave=False):
-        loss = gnn.train(model, predictor, embedding.weight, graph.adj_t, split_edge, optimizer, batch_size)
+        loss = gnn.train(model, predictor, x_input, graph.adj_t, split_edge, optimizer, batch_size)
         if (epoch+1) % 1 == 0:
-            (val_score, test_score) = gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size)[0]
+            (val_score, test_score) = gnn.test(model, predictor, x_input, graph.adj_t, split_edge, evaluator, batch_size)[0]
             if best_model_params is None or val_score >= best_model_score:
                 evals_since_best = 0
                 best_model_score = val_score
@@ -45,11 +48,11 @@ def init_train_eval(embedding_model: EmbeddingModel, dataset: Dataset, num_epoch
     print(f' Loading Dataset', end='\r', flush=True)
     (graph, split_edge) = load_dataset("./datasets/", dataset, device, embedding_model)
     print(f' Dataset loaded', end='\r', flush=True)
-    (model, embedding, predictor) = init_sage(hidden_channels=256,#20, #graph.num_node_features
+    (model, embedding, predictor) = init_sage(hidden_channels=256 if embedding_model == EmbeddingModel.Raw else graph.x.size(-1),
         num_datanodes=graph.num_nodes, num_layers=num_layers, dropout=0.5, device=device)
     evaluator = create_evaluator(dataset)
-    train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size)
-    print(gnn.test(model, predictor, embedding.weight, graph.adj_t, split_edge, evaluator, batch_size), flush=True)
+    train(model, embedding, predictor, evaluator, num_epochs=num_epochs, learn_rate=0.005, graph=graph, split_edge=split_edge, batch_size=batch_size, embedding_model=embedding_model)
+    print(gnn.test(model, predictor, embedding.weight if embedding_model == EmbeddingModel.Raw else graph.x, graph.adj_t, split_edge, evaluator, batch_size), flush=True)
 
 def run(datasets: List[Dataset], num_epochs, num_layers, device: torch.device, embedding_models: List[EmbeddingModel]=[EmbeddingModel.Raw]):
     batch_size = 64*1024
@@ -71,15 +74,17 @@ if __name__ == '__main__':
     Datasets2 = [Datasets.DrugDrugInteraction, Datasets.ProteinProteinAssociation]
     ### Reproduce
     def task_reproduce():
+        print("\n\nTask: Reproduce", flush=True)
         run(Datasets1, 10, 2, device)
 
     ### New Data
     def task_new_data():
+        print("\n\nTask: New Data", flush=True)
         run(Datasets2, 10, 2, device)
 
     ### Hyperparams Check
     def task_hyperparams_check():
-
+        print("\n\nTask: Hyperparams", flush=True)
         #### Different Number of Epochs
         # Run all datasets except PPA with 50, 100, 200, and 300 epochs
         for num_epochs in [50, 100, 200, 300]:
@@ -97,15 +102,18 @@ if __name__ == '__main__':
 
     ### New Algorithm Variant
     def task_algorithm_variant():
+        print("\n\nTask: Algorithm Variant", flush=True)
         pass
         #TODO
 
     ### Ablation Study
     def task_ablation_study():
-        run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        print("\n\nTask: Ablation Study", flush=True)
+        #run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
     #task_reproduce()
     #task_new_data()
-    task_hyperparams_check()
+    #task_hyperparams_check()
     #task_algorithm_variant()
-    #task_ablation_study()
+    task_ablation_study()

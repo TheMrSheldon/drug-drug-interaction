@@ -29,8 +29,8 @@ class EmbeddingModel(Enum):
 def calc_embedding_model(graph, embeddingmodel: EmbeddingModel, device): #https://github.com/snap-stanford/ogb/blob/master/examples/linkproppred/ppa/node2vec.py
     if embeddingmodel == EmbeddingModel.Raw:
         return None
-    p, q = (1, 1) #if embeddingmodel == EmbeddingModel.DeepWalk else (2, 2) #TODO for Node2Vec
-    print(graph)
+    # p,q values for Node2Vec were taken from https://arxiv.org/pdf/1607.00653.pdf p.7
+    p, q = (1, 1) if embeddingmodel == EmbeddingModel.DeepWalk else (4, 1)
     n2v = Node2Vec(graph.edge_index, 128, 40, 20, 10, sparse=True, p=p, q=q).to(device)
     loader = n2v.loader(batch_size=256, shuffle=True)
     optimizer = torch.optim.SparseAdam(list(n2v.parameters()), lr=0.01)
@@ -46,12 +46,10 @@ def calc_embedding_model(graph, embeddingmodel: EmbeddingModel, device): #https:
     return n2v.embedding.weight.data
 
 def apply_embedding_model(graph, embedding, device): #https://github.com/snap-stanford/ogb/blob/955f22515dc0e6a8231c0118f3c8760aa26c45a6/examples/linkproppred/ppa/mlp.py#L154
-    if embedding is None or graph.x is None:  # sometimes graph.x is None #TODO check if returning graph is ok for this case
+    if embedding is None:
         return graph
-    x = graph.x.to(torch.float)
-    x = torch.cat([x, embedding], dim=-1)
-    x = x.to(device)
-    graph.x = x #guessed
+    x = embedding.to(device)
+    graph.x = x
     return graph
 
 def load_dataset(path, dataset: Dataset, device, embeddingmodel: EmbeddingModel=EmbeddingModel.Raw):
