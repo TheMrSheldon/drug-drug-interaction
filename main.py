@@ -88,16 +88,16 @@ if __name__ == '__main__':
         #### Different Number of Epochs
         # Run all datasets except PPA with 50, 100, 200, and 300 epochs
         for num_epochs in [50, 100, 200, 300]:
-            print(f'\nRun with {num_epochs} epochs', flush=True)
+            print(f' Run with {num_epochs} epochs', flush=True)
             run(Datasets1+[Datasets.DrugDrugInteraction], num_epochs, 2, device)
         # Run all datasets with early stopping and a maximum of 400 epochs
-        print(f'\nRun with 400 epochs (early stopping)', flush=True)
+        print(f' Run with 400 epochs (early stopping)', flush=True)
         run(Datasets1+Datasets2, 400, 2, device)
 
         #### Different Depth
         # Run all datasets except PPA with a depth of 1, 3, and 5 layers
-        for depth in [1, 3, 5]:
-            print(f'\nRun with depth: {depth}', flush=True)
+        for depth in [1, 3, 5, 10]:
+            print(f' Run with depth: {depth}', flush=True)
             run(Datasets1+[Datasets.DrugDrugInteraction], 10, depth, device)
 
     ### New Algorithm Variant
@@ -109,11 +109,12 @@ if __name__ == '__main__':
     ### Ablation Study
     def task_ablation_study():
         print("\n\nTask: Ablation Study", flush=True)
-        #run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        run(Datasets1+Datasets2, 10, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
+        print(" Out of our own interest: Ablation Study with early stopping", flush=True)
         run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device, [EmbeddingModel.DeepWalk, EmbeddingModel.Node2Vec])
 
-    #task_reproduce()
-    #task_new_data()
-    #task_hyperparams_check()
+    task_reproduce()
+    task_new_data() #Nur Alex
+    task_hyperparams_check()
     #task_algorithm_variant()
     task_ablation_study()
