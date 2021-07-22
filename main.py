@@ -75,28 +75,25 @@ if __name__ == '__main__':
 
     ### New Data
     def task_new_data():
-        run(Datasets2, 200, 2, device)
+        run(Datasets2, 10, 2, device)
 
     ### Hyperparams Check
     def task_hyperparams_check():
 
         #### Different Number of Epochs
-        print('\nRun with 10 epochs', flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 10, 2, device)
-        print('\nRun with 50 epochs', flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 50, 2, device)
-        print('\nRun with 100 epochs', flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 100, 2, device)
-        print('\nRun with 200 epochs', flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 200, 2, device)
-        print('\nRun with 300 epochs', flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 300, 2, device)
-        print('\nRun with 400 epochs', flush=True)
-        run(Datasets1+[Datasets.DrugDrugInteraction], 400, 2, device)
+        # Run all datasets except PPA with 50, 100, 200, and 300 epochs
+        for num_epochs in [50, 100, 200, 300]:
+            print(f'\nRun with {num_epochs} epochs', flush=True)
+            run(Datasets1+[Datasets.DrugDrugInteraction], num_epochs, 2, device)
+        # Run all datasets with early stopping and a maximum of 400 epochs
+        print(f'\nRun with 400 epochs (early stopping)', flush=True)
+        run(Datasets1+Datasets2, 400, 2, device)
 
         #### Different Depth
-        #run(Datasets1, 10, 3, device)
-        #run(Datasets1, 10, 3, device)
+        # Run all datasets except PPA with a depth of 1, 3, and 5 layers
+        for depth in [1, 3, 5]:
+            print(f'\nRun with depth: {depth}', flush=True)
+            run(Datasets1+[Datasets.DrugDrugInteraction], 10, depth, device)
 
     ### New Algorithm Variant
     def task_algorithm_variant():
